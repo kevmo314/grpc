@@ -60,6 +60,8 @@ jobs:
           CIBW_BEFORE_BUILD: pip install cython==3.1.1 setuptools wheel
           CIBW_BUILD_FRONTEND: "build; args: --no-isolation"
           CIBW_ENVIRONMENT: GRPC_PYTHON_BUILD_WITH_CYTHON=1 GRPC_PYTHON_BUILD_EXT_COMPILER_JOBS=4
+          # Strip debug info (~190 MB of the wheel), as upstream's release script does.
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: auditwheel repair --strip -w {dest_dir} {wheel}
           # Tested below with ninetyfive's PYTHON_GIL=0 instead of upstream's suite.
           CIBW_TEST_SKIP: "*"
         with:
@@ -81,7 +83,7 @@ jobs:
           wheels=(dist/*.whl)
           [ "${#wheels[@]}" -eq 1 ]
           name="$(basename "${wheels[0]}")"
-          [[ "${name}" == *-cp314-cp314t-manylinux_*_"$(uname -m)".whl ]] || { echo "unexpected wheel tags: ${name}"; exit 1; }
+          [[ "${name}" == *-cp314-cp314t-*manylinux*_"$(uname -m)".whl ]] || { echo "unexpected wheel tags: ${name}"; exit 1; }
           python -m pip install --upgrade pip
           python -m pip install ${CHECK_DEPS} "${wheels[0]}"
           cd /tmp
